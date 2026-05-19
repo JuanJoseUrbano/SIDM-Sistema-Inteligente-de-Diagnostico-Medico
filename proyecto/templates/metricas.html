@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Métricas del Modelo - SIDM</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f0f2f5; margin: 0; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 16px; box-shadow: 0 8px 20px rgba(0,0,0,0.05); padding: 24px; }
+        h1, h2, h3 { color: #1e293b; margin-top: 1.5em; }
+        .grid-metrics { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin: 20px 0; }
+        .metric-card { background: #f8fafc; border-radius: 12px; padding: 16px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .metric-card h4 { margin: 0 0 8px; font-size: 14px; color: #475569; }
+        .metric-card p { margin: 0; font-size: 28px; font-weight: 700; color: #2563eb; }
+        table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+        th, td { border: 1px solid #e2e8f0; padding: 8px 12px; text-align: left; vertical-align: top; }
+        th { background: #f1f5f9; font-weight: 600; }
+        .matriz-container { overflow-x: auto; margin: 20px 0; }
+        .matriz-table td, .matriz-table th { text-align: center; white-space: nowrap; }
+        .diagonal { background-color: #dcfce7; font-weight: bold; }
+        .prediccion-item { background: #fefce8; margin-bottom: 12px; padding: 12px; border-radius: 8px; border-left: 4px solid #eab308; }
+        .acierto-si { color: #16a34a; font-weight: bold; }
+        .acierto-no { color: #dc2626; font-weight: bold; }
+        .badge { background: #e2e8f0; padding: 2px 8px; border-radius: 20px; font-size: 12px; }
+        .top3 { font-size: 13px; margin-top: 8px; color: #4b5563; }
+        .btn { display: inline-block; background: #3b82f6; color: white; padding: 10px 20px; border-radius: 40px; text-decoration: none; margin-top: 20px; }
+        .btn:hover { background: #2563eb; }
+        footer { text-align: center; margin-top: 40px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    {% if error %}
+        <h1>⚠️ Error</h1>
+        <p>{{ error }}</p>
+        <a class="btn" href="/">Volver</a>
+    {% else %}
+        <h1>📊 Métricas del modelo BETO</h1>
+        <p><strong>Timestamp:</strong> {{ timestamp }}</p>
+
+        <!-- Métricas generales -->
+        <h2>📈 Resumen de rendimiento</h2>
+        <div class="grid-metrics">
+            <div class="metric-card"><h4>Accuracy</h4><p>{{ metricas.accuracy }}</p></div>
+            <div class="metric-card"><h4>Balanced Acc</h4><p>{{ metricas.balanced_accuracy }}</p></div>
+            <div class="metric-card"><h4>Precision (macro)</h4><p>{{ metricas.precision_macro }}</p></div>
+            <div class="metric-card"><h4>Recall (macro)</h4><p>{{ metricas.recall_macro }}</p></div>
+            <div class="metric-card"><h4>F1 (macro)</h4><p>{{ metricas.f1_macro }}</p></div>
+            <div class="metric-card"><h4>Top-3 Accuracy</h4><p>{{ metricas.top3_accuracy }}</p></div>
+            <div class="metric-card"><h4>Loss final (train)</h4><p>{{ metricas.loss_train_final }}</p></div>
+            <div class="metric-card"><h4>Val Accuracy final</h4><p>{{ metricas.val_accuracy_final }}</p></div>
+        </div>
+
+        <!-- Matriz de confusión -->
+        {% if matriz_confusion_etiquetada %}
+        <h2>🧮 Matriz de confusión</h2>
+        <div class="matriz-container">
+            <table class="matriz-table">
+                <thead>
+                    <tr>
+                        <th>Real \ Predicho</th>
+                        {% for clase in clases %}
+                            <th>{{ clase|truncatechars:15 }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fila in matriz_confusion_etiquetada %}
+                    <tr>
+                        <th style="background:#f1f5f9">{{ fila.real|truncatechars:20 }}</th>
+                        {% for celda in fila.valores %}
+                            <td class="{% if celda.es_diagonal %}diagonal{% endif %}">
+                                {{ celda.valor }}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- Reporte de clasificación -->
+        {% if reporte_clasificacion %}
+        <h2>📋 Reporte por clase</h2>
+        <div style="overflow-x: auto;">
+            <table>
+                <thead>
+                    <tr><th>Enfermedad</th><th>Precisión</th><th>Recall</th><th>F1-score</th><th>Soporte</th></tr>
+                </thead>
+                <tbody>
+                    {% for key, valores in reporte_clasificacion.items %}
+                        {% if key != 'accuracy' and key != 'macro avg' and key != 'weighted avg' %}
+                            <tr>
+                                <td>{{ key }}</td>
+                                <td>{{ valores.precision|floatformat:3 }}</td>
+                                <td>{{ valores.recall|floatformat:3 }}</td>
+                                <td>{{ valores.f1_score|floatformat:3 }}</td>
+                                <td>{{ valores.support }}</td>
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                    <tr style="background:#f1f5f9; font-weight:bold;">
+                        <td>Macro avg</td>
+                        <td>{{ reporte_clasificacion.macro_avg.precision|floatformat:3 }}</td>
+                        <td>{{ reporte_clasificacion.macro_avg.recall|floatformat:3 }}</td>
+                        <td>{{ reporte_clasificacion.macro_avg.f1_score|floatformat:3 }}</td>
+                        <td>{{ reporte_clasificacion.macro_avg.support }}</td>
+                    </tr>
+                    <tr style="background:#f1f5f9; font-weight:bold;">
+                        <td>Weighted avg</td>
+                        <td>{{ reporte_clasificacion.weighted_avg.precision|floatformat:3 }}</td>
+                        <td>{{ reporte_clasificacion.weighted_avg.recall|floatformat:3 }}</td>
+                        <td>{{ reporte_clasificacion.weighted_avg.f1_score|floatformat:3 }}</td>
+                        <td>{{ reporte_clasificacion.weighted_avg.support }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        <!-- Predicciones -->
+        {% if prediccion %}
+        <h2>🔍 Primeras 50 predicciones</h2>
+        {% for pred in prediccion %}
+        <div class="prediccion-item">
+            <strong>#{{ pred.id }}</strong> — Real: {{ pred.real }} | Predicho: {{ pred.predicho }}
+            <span class="badge">Confianza: {{ pred.confianza|floatformat:2 }}%</span>
+            <span class="{% if pred.acierto == 'Sí' %}acierto-si{% else %}acierto-no{% endif %}">
+                ({{ pred.acierto }})
+            </span>
+            <div class="top3">
+                🏆 Top-3:
+                {% for top in pred.top3 %}
+                    {{ top.enfermedad }} ({{ top.probabilidad|floatformat:1 }}%){% if not forloop.last %}, {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+
+        <div style="text-align: center; margin-top: 30px;">
+            <a class="btn" href="/">← Volver al inicio</a>
+        </div>
+    {% endif %}
+</div>
+<footer>
+    <small>SIDM - Sistema Inteligente de Diagnóstico Médico | Modelo BETO</small>
+</footer>
+</body>
+</html>

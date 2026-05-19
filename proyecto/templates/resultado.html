@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico - SIDM</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        /* FORMULARIO */
+        .formulario {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .formulario-grupo {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .formulario-grupo label {
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 1.1em;
+        }
+
+        .formulario-grupo textarea {
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-family: inherit;
+            font-size: 1em;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s;
+        }
+
+        .formulario-grupo textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .formulario-grupo p {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+
+        .botones {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        button {
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-diagnosticar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            flex: 1;
+        }
+
+        .btn-diagnosticar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-volver {
+            background: #ecf0f1;
+            color: #2c3e50;
+            flex: 1;
+        }
+
+        .btn-volver:hover {
+            background: #bdc3c7;
+        }
+
+        /* RESULTADO */
+        .resultado {
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .sintomas-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+
+        .sintomas-box h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }
+
+        .sintomas-box p {
+            color: #34495e;
+            line-height: 1.6;
+        }
+
+        .diagnostico-principal {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .diagnostico-principal h2 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .enfermedad-principal {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .probabilidad-principal {
+            font-size: 1.5em;
+            opacity: 0.95;
+        }
+
+        .alternativas {
+            margin-top: 30px;
+        }
+
+        .alternativas h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .alternativa-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 4px solid #f5576c;
+        }
+
+        .alternativa-nombre {
+            color: #2c3e50;
+            font-weight: 600;
+        }
+
+        .alternativa-prob {
+            color: #f5576c;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+
+        .error-mensaje {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #f5576c;
+            margin-bottom: 20px;
+        }
+
+        .nuevo-diagnostico {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .btn-nuevo {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-nuevo:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        {% if error %}
+            <!-- ERROR -->
+            <h1>⚠️ Error</h1>
+            <div class="error-mensaje">{{ error }}</div>
+            <div style="text-align: center;">
+                <a href="/" style="display: inline-block; background: #667eea; color: white; padding: 12px 30px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                    🏠 Volver al Menú
+                </a>
+            </div>
+
+        {% elif tipo == "formulario" %}
+            <!-- FORMULARIO DE DIAGNÓSTICO -->
+            <h1>🔍 Ingresa tus Síntomas</h1>
+            <form method="post" class="formulario">
+                {% csrf_token %}
+                <div class="formulario-grupo">
+                    <label for="sintomas">Describe tus síntomas:</label>
+                    <textarea id="sintomas" name="sintomas" minlength="100" maxlength="1000" placeholder="Ej: Dolor de cabeza, fiebre, fatiga, tos seca..." required></textarea>
+                    <p>Describe tus síntomas de forma clara y detallada para obtener un mejor diagnóstico.</p>
+                </div>
+
+                <div class="botones">
+                    <button type="submit" class="btn-diagnosticar">🔍 Diagnosticar</button>
+                    <a href="/" style="display: flex; align-items: center; justify-content: center; text-decoration: none; color: inherit;">
+                        <button type="button" class="btn-volver" style="cursor: pointer;">↩️ Volver</button>
+                    </a>
+                </div>
+            </form>
+
+        {% elif tipo == "diagnostico" %}
+            <!-- RESULTADO DEL DIAGNÓSTICO -->
+            <div class="resultado">
+                <h1>📋 Resultado del Diagnóstico</h1>
+
+                <div class="sintomas-box">
+                    <h3>📝 Síntomas Reportados:</h3>
+                    <p>{{ sintomas_usuario }}</p>
+                </div>
+
+                <div class="diagnostico-principal">
+                    <h2>🎯 Diagnóstico Principal</h2>
+                    <div class="enfermedad-principal">{{ enfermedad_principal }}</div>
+                    <div class="probabilidad-principal">{{ probabilidad_principal|floatformat:1 }}% de probabilidad</div>
+                </div>
+
+                {% if top_3 %}
+                    <div class="alternativas">
+                        <h3>📊 Otras Posibles Enfermedades</h3>
+                        {% for enf in top_3 %}
+                            <div class="alternativa-item">
+                                <span class="alternativa-nombre">{{ enf.nombre }}</span>
+                                <span class="alternativa-prob">{{ enf.probabilidad|floatformat:1 }}%</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="nuevo-diagnostico">
+                    <a href="/diagnosticar/" style="display: inline-block; text-decoration: none;">
+                        <button class="btn-nuevo">🔍 Nuevo Diagnóstico</button>
+                    </a>
+                    <a href="/" style="display: inline-block; text-decoration: none; margin-left: 10px;">
+                        <button class="btn-nuevo">🏠 Volver al Menú</button>
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</body>
+
+</html>

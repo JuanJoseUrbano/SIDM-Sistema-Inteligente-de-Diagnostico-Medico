@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIDM - Sistema Inteligente de Diagnóstico Médico</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@2"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 50px;
+        }
+
+        /* MENÚ PRINCIPAL */
+        .menu-principal {
+            text-align: center;
+        }
+
+        .menu-principal h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .menu-principal .subtitulo {
+            color: #7f8c8d;
+            margin-bottom: 50px;
+            font-size: 1.1em;
+        }
+
+        .opciones {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .tarjeta {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: transform 0.3s, box-shadow 0.3s;
+            color: white;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .tarjeta:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
+        }
+
+        .tarjeta.diagnosticar {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .tarjeta.diagnosticar:hover {
+            box-shadow: 0 15px 40px rgba(245, 87, 108, 0.4);
+        }
+
+        .tarjeta h2 {
+            font-size: 1.8em;
+            margin-bottom: 15px;
+        }
+
+        .tarjeta p {
+            font-size: 1em;
+            line-height: 1.6;
+        }
+
+        .icono {
+            font-size: 3em;
+            margin-bottom: 15px;
+        }
+
+        /* BOTÓN DESHABILITADO */
+        .tarjeta.deshabilitada {
+            background: linear-gradient(135deg, #bbb 0%, #999 100%);
+            cursor: not-allowed;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        .tarjeta.deshabilitada:hover {
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* RESULTADOS */
+        .resultados {
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 2px solid #ecf0f1;
+        }
+
+        .metricas {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .metrica-item {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .metrica-item h4 {
+            color: #2c3e50;
+            margin-bottom: 8px;
+            font-size: 0.9em;
+            text-transform: uppercase;
+        }
+
+        .metrica-item .valor {
+            font-size: 1.8em;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .matriz-confusion-etiquetada {
+            margin: 30px 0;
+            overflow-x: auto;
+        }
+
+        .matriz-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-top: 20px;
+        }
+
+        .matriz-table th,
+        .matriz-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .matriz-table th {
+            background-color: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .diagonal {
+            background-color: #d4edda;
+            font-weight: bold;
+            color: #155724;
+        }
+
+        .prediccion-tabla {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .prediccion-tabla th,
+        .prediccion-tabla td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        .prediccion-tabla th {
+            background-color: #667eea;
+            color: white;
+            font-weight: bold;
+        }
+
+        .prediccion-tabla tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        .ok {
+            color: #28a745;
+            font-weight: bold;
+        }
+
+        .error {
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        .volver {
+            margin-top: 30px;
+            text-align: center;
+        }
+
+        .btn-volver {
+            background: #667eea;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-volver:hover {
+            background: #5568d3;
+        }
+
+        h2, h3 {
+            color: #2c3e50;
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        .heatmap-container {
+            width: 100%;
+            height: 600px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        {% if tipo == "entrenar" %}
+            <!-- VISTA DE RESULTADOS DE ENTRENAMIENTO -->
+            <div class="resultados">
+                <h2>✅ Modelo entrenado y guardado exitosamente</h2>
+                <p style="color: #7f8c8d; margin-bottom: 20px;">El modelo ha sido entrenado con el dataset de síntomas y enfermedades.</p>
+
+                {% if metricas %}
+                    <h3>📊 Métricas de Rendimiento</h3>
+                    <div class="metricas">
+                        <div class="metrica-item">
+                            <h4>Accuracy</h4>
+                            <div class="valor">{{ metricas.accuracy }}</div>
+                        </div>
+                        <div class="metrica-item">
+                            <h4>Balanced Accuracy</h4>
+                            <div class="valor">{{ metricas.balanced_accuracy }}</div>
+                        </div>
+                        <div class="metrica-item">
+                            <h4>Precision (Macro)</h4>
+                            <div class="valor">{{ metricas.precision_macro }}</div>
+                        </div>
+                        <div class="metrica-item">
+                            <h4>Recall (Macro)</h4>
+                            <div class="valor">{{ metricas.recall_macro }}</div>
+                        </div>
+                        <div class="metrica-item">
+                            <h4>F1 Score (Macro)</h4>
+                            <div class="valor">{{ metricas.f1_macro }}</div>
+                        </div>
+                        <div class="metrica-item">
+                            <h4>Top-3 Accuracy</h4>
+                            <div class="valor">{{ metricas.top3_accuracy }}</div>
+                        </div>
+                    </div>
+
+                    <h3>📈 Métricas de Entrenamiento (Última Época)</h3>
+                    <div class="metricas">
+                        <div class="metrica-item">
+                            <h4>Loss (Entrenamiento)</h4>
+                            <div class="valor">{{ metricas.loss_train_final }}</div>
+                        </div>
+                        <div class="metrica-item">
+                            <h4>Accuracy (Entrenamiento)</h4>
+                            <div class="valor">{{ metricas.accuracy_train_final }}</div>
+                        </div>
+                        <div class="metrica-item">
+                            <h4>Loss (Validación)</h4>
+                            <div class="valor">{{ metricas.val_loss_final }}</div>
+                        </div>
+                        <div class="metrica-item">
+                            <h4>Accuracy (Validación)</h4>
+                            <div class="valor">{{ metricas.val_accuracy_final }}</div>
+                        </div>
+                    </div>
+                {% endif %}
+
+                {% if matriz_confusion_etiquetada %}
+                    <h3>🔍 Matriz de Confusión</h3>
+                    <div class="matriz-confusion-etiquetada">
+                        <table class="matriz-table">
+                            <thead>
+                                <tr>
+                                    <th style="background-color: #ddd; color: #000;">Real \ Predicho</th>
+                                    {% for clase in clases %}
+                                        <th>{{ clase|truncatewords:3 }}</th>
+                                    {% endfor %}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for fila in matriz_confusion_etiquetada %}
+                                    <tr>
+                                        <th style="background-color: #ddd; color: #000; text-align: left;">{{ fila.real|truncatewords:3 }}</th>
+                                        {% for item in fila.valores %}
+                                            <td class="{% if item.es_diagonal %}diagonal{% endif %}">{{ item.valor }}</td>
+                                        {% endfor %}
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endif %}
+
+                {% if prediccion %}
+                    <h3>📋 Primeras 50 Predicciones</h3>
+                    <table class="prediccion-tabla">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Enfermedad Real</th>
+                                <th>Predicción</th>
+                                <th>Confianza</th>
+                                <th>Acierto</th>
+                                <th>Top-3 Alternativas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pred in prediccion %}
+                                <tr>
+                                    <td>{{ pred.id }}</td>
+                                    <td>{{ pred.real }}</td>
+                                    <td>{{ pred.predicho }}</td>
+                                    <td>{{ pred.confianza|floatformat:2 }}</td>
+                                    <td class="{% if pred.acierto == 'Sí' %}ok{% else %}error{% endif %}">{{ pred.acierto }}</td>
+                                    <td>
+                                        {% for item in pred.top3 %}
+                                            <div>{{ item.enfermedad }} ({{ item.probabilidad|floatformat:2 }})</div>
+                                        {% endfor %}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                {% endif %}
+
+                <div class="volver">
+                    <a href="/" class="btn-volver">🏠 Volver al Menú</a>
+                </div>
+            </div>
+
+        {% else %}
+            <!-- MENÚ PRINCIPAL -->
+            <div class="menu-principal">
+                <h1>🏥 SIDM</h1>
+                <p class="subtitulo">Sistema Inteligente de Diagnóstico Médico</p>
+                
+                <div class="opciones">
+                    <a href="/entrenar/" class="tarjeta">
+                        <div class="icono">🧠</div>
+                        <h2>Entrenar Modelo</h2>
+                        <p>Entrena el modelo de IA con el dataset de síntomas y enfermedades. El modelo se guardará automáticamente.</p>
+                    </a>
+
+                    <a href="/metricas/" class="tarjeta" {% if not metrics_existe %}style="opacity:0.6;pointer-events:none;"{% endif %}>
+                        <div class="icono">📈</div>
+                        <h2>Ver Métricas</h2>
+                        <p>Visualiza las métricas del último entrenamiento sin necesidad de volver a entrenar.</p>
+                    </a>
+
+                    <a href="/diagnosticar/" class="tarjeta diagnosticar {% if not modelo_existe %}deshabilitada{% endif %}">
+                        <div class="icono">🔍</div>
+                        <h2>Diagnosticar</h2>
+                        <p>{% if modelo_existe %}Usa el modelo entrenado para diagnosticar enfermedades basándose en síntomas.{% else %}(Primero entrena el modelo){% endif %}</p>
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</body>
+
+</html>
